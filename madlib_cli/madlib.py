@@ -1,61 +1,70 @@
 import re
 
-print("""      
-        **Welcome to Madlib game!** 
-this game is to make a funny sentence, so you should input none ,verb ,adjective and numbers""")
-
 def read_template(path):
-
     try:
-      p=open(path)
-      return p.read().strip("\n")
+        with open(path) as file:
+            content = file.read()
+        return content
+    except FileNotFoundError:
+        raise FileNotFoundError("Error : file not found")
 
-    except FileNotFoundError as error:
-        print('not found!')
-        print(error)
+def parse_template(template):
+    parts = []
+    stripped = ""
+    start = 0
+    while True:
+        left_brace = template.find("{", start)
+        if left_brace == -1:
+            stripped += template[start:]
+            break
+        right_brace = template.find("}", left_brace)
+        if right_brace == -1:
+            stripped += template[start:]
+            break
+        parts.append(template[left_brace + 1:right_brace])
+        stripped += template[start:left_brace] + "{}"
+        start = right_brace + 1
+    return stripped, tuple(parts)
 
-def parse_template(text):
-    actual_stripped=''
-    actual_parts=[]
-    x=text.split(' ')
-    reg = r"^{\w+}|\.$"
-
-    for i in x:
-        if re.match(reg,i)==None :
-            actual_stripped+=f"{i} "
-        else :
-            if i==x[-1]:
-                actual_stripped += '{}.'
-                actual_parts += [i[1:-2]]  
-            else:
-                actual_parts += [i[1:-1]]
-                actual_stripped += '{} '
-
-    actual_parts=tuple(actual_parts)
-    return (actual_stripped,actual_parts)
-    
-
-def merge(text,tep):
-     return text.format(*tep)
+def merge(stripped, parts):
+    return stripped.format(*parts)
 
 
-def create_file(result ,file_to_write_on_it):
-    with open(file_to_write_on_it, "w") as f:
-        f.write(result)
+def welcome():
+    print('*'*20)
+    print("Welcome to the Madlib game")
+    print("to create your own text follow instruction")
+    print('*'*20)
+
+def user_input(parts):
+    user_inputs = []
+    for part in parts:
+        one_input = input("Please Enter {} : ".format(part))
+        user_inputs.append(one_input)
+    return user_inputs
+
+def add_to_file(merge_madlib,resultpath1):
+    with open(resultpath1, "w") as file:
+        file.write(merge_madlib)
 
 
-def start_game(file_toRead_game,file_toWrite_game):
-    text = read_template(file_toRead_game)
-    stripped_text, parts_tuple = parse_template(text)
-    user_input = []
-    
-    for i in range(len(parts_tuple)):
-        x = input('enter a {} > '.format(parts_tuple[i]))
-        user_input.append(x)
-    result = stripped_text.format(*user_input)
-    print(f"\n{result}")
-    create_file(result,file_toWrite_game)
-  
-  
-if __name__=="__main__":
-    start_game("assets/text_full.txt","assets/outcome.txt")
+
+
+if __name__ == "__main__":
+    welcome()
+    path1="assets/dark_and_stormy_night_template.txt"
+    path2="assets/full_text.txt"
+    resultpath1="assets/result1.txt"
+    resultpath2 = "assets/result2.txt"
+
+    template = read_template(path1)
+    # template = read_template(path2)
+
+    stripped, parts = parse_template(template)
+    user_inputs = user_input(parts)
+    merge_madlib = merge(stripped, user_inputs)
+    add_to_file(merge_madlib,resultpath1)
+    # add_to_file(merge_madlib,resultpath2)
+
+    print(merge_madlib)
+
